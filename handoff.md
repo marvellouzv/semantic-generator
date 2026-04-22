@@ -129,3 +129,15 @@ Touched files:
 - frontend/src/components/EnhancedFilters.tsx
 - frontend/src/components/ExportDialog.tsx
 - handoff.md
+
+### 2026-04-22 - GitHub binding and first push
+
+- Initialized local git repository in project root.
+- Hardened .gitignore for secrets: ignored .env/.env.*, ackend/.env, backups, and local DB file.
+- Added README section with safe GitHub onboarding steps and secret handling guidance.
+- Created initial commit and pushed main to git@github.com:marvellouzv/semantic-generator.git.
+
+Touched files:
+- .gitignore
+- README.md
+- handoff.md
