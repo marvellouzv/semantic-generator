@@ -1,0 +1,212 @@
+# Cursor Rules for Semantic Generator Project
+
+## OpenAI / GPT‑5 Integration (Backend)
+
+### GPT Client & API
+- ✅ **Все GPT‑запросы в backend** делаем только через `AsyncOpenAI.responses.create()`.
+- ✅ В прикладном коде backend используем обёртку `app.gpt5_wrapper.ask_gpt5`.
+- ❌ Не использовать `chat.completions.create()`.
+- ❌ Не создавать sync‑клиент `OpenAI()`.
+
+### Формат сообщений
+- ✅ Для текстовых блоков всегда использовать `type: "input_text"`.
+- ❌ Не использовать `type: "text"`.
+- Структура блока:
+  - `{"role": "user", "content": [{"type": "input_text", "text": "..."}]}`
+
+### Токены и temperature
+- ✅ Всегда указывать `max_output_tokens` (а не `max_tokens` / `max_completion_tokens`).
+- ✅ Для обычного текст‑генератора: `temperature=0.2` по умолчанию.
+- ✅ При использовании `response_format` (JSON‑режим) **не передавать** `temperature` и `top_p`.
+
+### Async‑паттерн
+- ✅ Все роуты FastAPI, которые ходят в GPT, объявляются как `async def` и делают `await ask_gpt5(...)`.
+- ❌ Не использовать `asyncio.run_until_complete()` в backend.
+- ❌ Не оборачивать GPT‑вызовы в `asyncio.to_thread()` или `run_in_executor()`.
+- Допустимо `asyncio.run(...)` только внутри Celery‑тасок/скриптов верхнего уровня.
+
+### HTTP‑клиент и таймауты
+- ✅ Использовать общий httpx‑клиент из `backend/app/openai_client.py`:
+  - connect: 10s, write: 60s, pool: 60s, read: 600s.
+  - 5 ретраев с экспоненциальным backoff.
+- ❌ Не выставлять `timeout=None`.
+
+### Обработка ошибок
+- ✅ Карта ошибок OpenAI → HTTP:
+  - 400: ошибки валидации / некорректные параметры.
+  - 429: rate limit.
+  - 502: APIError / APIConnectionError.
+  - 504: APITimeoutError.
+- ✅ Сообщения должны быть конкретными, например:  
+  `"GPT-5 validation error: temperature is not supported with response_format"`.
+- ❌ Не возвращать обезличенные `"API error"` и 500 без деталей.
+
+### Батч‑генерации
+- Для 1000+ элементов (запросы, кластеры и т.п.):
+  - Использовать `backend/app/batch_generator.py`.
+  - Размер батча: 200–300.
+  - Параллельно не более 5 батчей.
+  - `max_output_tokens` на батч: 2000–4000.
+
+---
+
+## Code Style Rules
+
+### Python
+- ✅ Все функции с аннотациями типов.
+- ✅ Строки форматируем только через f‑строки.
+- ✅ Любой I/O (GPT, БД, HTTP) по возможности делаем через `async def`.
+- ✅ В прод‑коде используем `logging`, а не `print()`.
+
+### FastAPI
+- ✅ Все GPT‑роуты — `async def`.
+- ✅ Используем зависимости (`Depends`) для клиентов и сервисов.
+- ✅ Возвращаем понятные JSON‑структуры (Pydantic‑модели или dict с явными полями).
+
+### Сообщения об ошибках
+- ✅ Сообщения с понятной причиной: что сломалось и что делать.
+- ❌ Не писать расплывчатые `"Something went wrong"`.
+
+---
+
+## Environment, Secrets & Ports
+
+- ✅ Порты по умолчанию:
+  - backend: `http://localhost:8000`
+  - frontend: `http://localhost:5173`
+- ✅ Переменная **`OPENAI_API_KEY`**:
+  - хранится только в `backend/.env` (на основе `backend/env_template.txt`) или в переменных окружения;
+  - не попадает в git.
+- ❌ Во frontend (`frontend/.env`, JS‑код, Vite‑переменные) **никогда** не кладём `OPENAI_API_KEY`.  
+  Если это уже произошло — файл удалить, ключ в кабинете OpenAI пересоздать.
+- ✅ Frontend использует `VITE_API_URL` (по умолчанию `http://localhost:8000`, см. `frontend/src/api.ts`).
+
+---
+
+## Testing Rules
+
+### Перед коммитом
+- [ ] Запустить smoke‑тесты: `python backend/test_gpt5_smoke.py`.
+- [ ] Проверить, что в backend нет запрещённых паттернов:
+  - `grep -r "chat\.completions" backend/app/`
+  - `grep -r "max_tokens" backend/app/` (должен использоваться только `max_output_tokens`).
+  - `grep -r "run_until_complete" backend/app/` (допустимо только в комментариях).
+- [ ] Убедиться, что нет новых ошибок линтера.
+- [ ] Проверить хотя бы один реальный запрос к GPT‑5 с рабочим ключом.
+
+### Для новых GPT‑фич
+- Добавлять/обновлять тесты в `backend/test_gpt5_smoke.py`.
+- По возможности проверять время ответа (< 5 секунд для коротких запросов).
+- Тестировать негативные сценарии (400, 429, 504).
+
+---
+
+## Common Patterns (Backend)
+
+### ✅ CORRECT: Basic GPT‑5 Call
+```python
+from app.gpt5_wrapper import ask_gpt5
+
+response = await ask_gpt5(
+    input_blocks=[{
+        "role": "user",
+        "content": [{"type": "input_text", "text": "Your prompt here"}]
+    }],
+    model="gpt-5",
+    max_output_tokens=1200,
+    temperature=0.2,  # только для обычного текста
+)
+```
+
+### ✅ CORRECT: JSON Mode (Structured Output)
+```python
+response = await ask_gpt5(
+    input_blocks=[{
+        "role": "user",
+        "content": [{"type": "input_text", "text": "Return JSON: {...}"}]
+    }],
+    model="gpt-5",
+    max_output_tokens=1600,
+    response_format={"type": "json_schema", "json_schema": {...}},
+    # temperature / top_p не указываем
+)
+```
+
+### ✅ CORRECT: Large Generation (Batched)
+```python
+from app.batch_generator import generate_large_query_set
+
+queries = await generate_large_query_set(
+    topic="холодильники",
+    intents=["commercial", "informational"],
+    target_count=1500,
+    model="gpt-5",
+)
+```
+
+### ❌ WRONG: Using chat.completions
+```python
+# DON'T DO THIS!
+from openai import OpenAI
+client = OpenAI()
+response = client.chat.completions.create(...)
+```
+
+### ❌ WRONG: Using run_until_complete
+```python
+# DON'T DO THIS!
+import asyncio
+loop = asyncio.get_event_loop()
+result = loop.run_until_complete(ask_gpt5(...))
+```
+
+### ❌ WRONG: Temperature with response_format
+```python
+# DON'T DO THIS! (will cause error)
+response = await ask_gpt5(
+    input_blocks=[...],
+    response_format={"type": "json_object"},
+    temperature=0.7,  # ERROR: not supported with response_format
+)
+```
+
+---
+
+## Project Runtime Notes (Local Dev)
+
+- ОС: Windows 10/11, терминал: PowerShell.
+- Быстрый запуск локально (через Cursor, без `start_services.py`):
+  - backend:
+    - `cd backend`
+    - `python -m venv venv`
+    - `.\venv\Scripts\python.exe -m pip install --upgrade pip`
+    - `.\venv\Scripts\python.exe -m pip install -r requirements.txt`
+    - `.\venv\Scripts\python.exe -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000`
+  - frontend:
+    - `cd frontend`
+    - `npm install`
+    - `npm run dev -- --port 5173`
+
+---
+
+## MCP Integration (Model Context Protocol) — только для разработки
+
+- В Cursor настроен MCP‑сервер `openai-guard` для удобных GPT‑запросов в IDE.
+- Используем MCP только для разработки и экспериментов; боевой backend работает через `gpt5_wrapper`.
+
+Пример prompt‑а в Cursor:
+```
+Используй MCP-сервер openai-guard и инструмент ask-openai.
+Модель: gpt-5, max_output_tokens: 2000.
+Prompt: "Сгенерируй 10 SEO-запросов для темы 'холодильники Samsung'."
+```
+
+---
+
+## Migration Status ✅
+
+- Проект полностью переведён на **GPT‑5 Responses API**.
+- В коде не должно быть вызовов `chat.completions`, `max_tokens` и блокирующих GPT‑вызовов.
+- При изменении интеграции эти правила нужно обновлять.
+
+

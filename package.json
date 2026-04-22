@@ -1,0 +1,25 @@
+{
+  "name": "semantic-generator",
+  "version": "1.0.0",
+  "description": "Двухэтапный русский SEO семантический генератор",
+  "scripts": {
+    "stop": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"Get-Process node,python -ErrorAction SilentlyContinue | Stop-Process -Force; Get-NetTCPConnection -LocalPort 8000,5173 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }\"",
+    "dev:backend": "cross-env PYTHONIOENCODING=utf-8 powershell -NoProfile -Command \"cd backend; python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 1\"",
+    "dev:frontend": "cross-env VITE_API_URL=http://127.0.0.1:8000 vite --port 5173",
+    "dev": "concurrently -n BACK,FRONT -c blue,green \"npm:dev:backend\" \"npm:dev:frontend\"",
+
+    "install:be": "cd backend && pip install -r requirements.txt",
+    "install:fe": "cd frontend && npm install",
+    "install:all": "npm install && npm run install:be && npm run install:fe",
+    "setup": "npm run install:all && echo Setup complete! Create .env files and run npm run dev"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0",
+    "cross-env": "^7.0.3",
+    "vite": "^5.4.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "python": ">=3.11.0"
+  }
+}

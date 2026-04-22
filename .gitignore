@@ -1,0 +1,44 @@
+### Node / Frontend
+node_modules/
+dist/
+build/
+.parcel-cache/
+.vite/
+
+### Python / Backend
+venv/
+.venv/
+env/
+*.pyc
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+### Environment & secrets
+.env
+.env.*
+*.env
+*.env.local
+*.env.*.local
+frontend/.env
+backend/.env
+**/.env
+**/.env.*
+
+### IDE / OS junk
+.vscode/
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+
+### Logs & temp
+*.log
+logs/
+tmp/
+temp/
+backups/
+backend/metrics.db

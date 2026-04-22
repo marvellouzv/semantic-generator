@@ -1,0 +1,182 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 25% 97%;
+    --foreground: 217 33% 17%;
+    --card: 0 0% 100%;
+    --card-foreground: 217 33% 17%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 217 33% 17%;
+    --primary: 219 84% 53%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 215 26% 27%;
+    --muted: 210 36% 95%;
+    --muted-foreground: 215 16% 46%;
+    --accent: 21 83% 51%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 74% 42%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 27% 88%;
+    --input: 214 27% 88%;
+    --ring: 219 84% 53%;
+    --chart-1: 219 84% 53%;
+    --chart-2: 207 90% 54%;
+    --chart-3: 21 83% 51%;
+    --chart-4: 173 58% 39%;
+    --chart-5: 43 74% 52%;
+    --radius: 0.375rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background-image:
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.72)),
+      radial-gradient(circle at 1px 1px, rgba(30, 41, 59, 0.04) 1px, transparent 0);
+    background-size: auto, 24px 24px;
+  }
+
+  h1,
+  h2 {
+    letter-spacing: -0.02em;
+  }
+
+  button {
+    transition:
+      background-color 0.18s ease,
+      border-color 0.18s ease,
+      color 0.18s ease,
+      box-shadow 0.18s ease,
+      transform 0.18s ease;
+  }
+
+  button:hover {
+    transform: translateY(-1px);
+  }
+
+  button:active {
+    transform: translateY(0);
+  }
+
+  input:focus,
+  select:focus,
+  textarea:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
+    border-color: rgba(37, 99, 235, 0.55);
+  }
+
+  table {
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+}
+
+@layer components {
+  .app-shell {
+    min-height: 100vh;
+  }
+
+  .bg-white.rounded-lg,
+  .bg-white.rounded-xl {
+    border: 1px solid hsl(var(--border));
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 10px 24px rgba(15, 23, 42, 0.04);
+  }
+
+  .text-gray-600 {
+    color: rgb(71 85 105);
+  }
+
+  .text-gray-500 {
+    color: rgb(100 116 139);
+  }
+}
+
+/* Virtualized table */
+.table-virtualized {
+  height: 600px;
+  overflow: auto;
+}
+
+.table-virtualized tbody {
+  display: block;
+  position: relative;
+}
+
+.table-virtualized tr {
+  display: flex;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+}
+
+.table-virtualized td {
+  flex: 1;
+  padding: 1rem;
+  border-bottom: 1px solid #dbe3ee;
+}
+
+/* Loading spinner */
+.loading-spinner {
+  border: 4px solid #e2e8f0;
+  border-top: 4px solid #2563eb;
+  border-radius: 9999px;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #e9eef5;
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #b5c0d1;
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #8fa0b8;
+}
+
+@media (max-width: 768px) {
+  .grid-cols-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .grid-cols-5 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .flex {
+    flex-wrap: wrap;
+  }
+}

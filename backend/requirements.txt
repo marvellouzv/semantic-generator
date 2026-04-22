@@ -1,0 +1,40 @@
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+pydantic==2.8.2
+python-dotenv==1.0.1
+openai==1.109.1
+httpx==0.26.0
+orjson==3.10.10
+ujson==5.10.0
+pandas==2.2.3
+openpyxl==3.1.5
+xlsxwriter==3.2.0
+pymorphy3==2.0.2
+razdel==0.5.0
+rapidfuzz==3.10.1
+python-slugify==8.0.4
+unidecode==1.3.8
+tenacity==9.0.0
+aiolimiter==1.1.0
+sse-starlette==2.1.3
+ruff==0.7.4
+black==24.10.0
+mypy==1.13.0
+pytest==8.3.3
+pytest-asyncio==0.24.0
+# Redis и кэширование
+redis==5.0.1
+# SQLAlchemy для работы с БД - используем последнюю версию 2.0
+sqlalchemy==2.0.44
+alembic==1.13.1
+# Celery для batch обработки
+celery==5.3.4
+# Metrics и rate limiting
+slowapi==0.1.9
+python-jose==3.3.0
+bcrypt==4.1.2
+python-multipart==0.0.6
+# PostgreSQL Driver - установите вручную или используйте Docker
+# Вариант 1 (Linux/Docker): pip install psycopg[binary]
+# Вариант 2 (Windows с Docker DB): postgres://user:pass@localhost:5432/db
+# В Docker Compose PostgreSQL предоставляется автоматически

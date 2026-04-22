@@ -1,0 +1,2 @@
+# Copy this to .env file in frontend/ directory
+VITE_API_URL=http://localhost:8000

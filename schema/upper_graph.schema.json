@@ -1,0 +1,87 @@
+{
+  "title": "UpperGraph",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "topic": {
+      "type": "string"
+    },
+    "locale": {
+      "type": "string"
+    },
+    "intents_applied": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "commercial",
+          "informational",
+          "service",
+          "price",
+          "navigational",
+          "brand",
+          "diy",
+          "download",
+          "comparative",
+          "problem"
+        ]
+      }
+    },
+    "clusters": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "cluster_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "intent_mix": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "commercial",
+                "informational",
+                "service",
+                "price",
+                "navigational",
+                "brand",
+                "diy",
+                "download",
+                "comparative",
+                "problem"
+              ]
+            }
+          },
+          "seed_examples": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 5
+          },
+          "notes": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "cluster_id",
+          "name",
+          "intent_mix",
+          "seed_examples",
+          "notes"
+        ]
+      }
+    }
+  },
+  "required": [
+    "topic",
+    "locale",
+    "intents_applied",
+    "clusters"
+  ]
+}

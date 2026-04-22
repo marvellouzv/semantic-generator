@@ -1,0 +1,76 @@
+{
+  "title": "ExpandedQueries",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "topic": {
+      "type": "string"
+    },
+    "locale": {
+      "type": "string"
+    },
+    "expanded": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "cluster_id": {
+            "type": "string"
+          },
+          "cluster_name": {
+            "type": "string"
+          },
+          "queries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "q": {
+                  "type": "string"
+                },
+                "intent": {
+                  "type": "string",
+                  "enum": [
+                    "commercial",
+                    "informational",
+                    "service",
+                    "price",
+                    "navigational",
+                    "brand",
+                    "diy",
+                    "download",
+                    "comparative",
+                    "problem"
+                  ]
+                },
+                "tags": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "q",
+                "intent",
+                "tags"
+              ]
+            }
+          }
+        },
+        "required": [
+          "cluster_id",
+          "cluster_name",
+          "queries"
+        ]
+      }
+    }
+  },
+  "required": [
+    "topic",
+    "locale",
+    "expanded"
+  ]
+}
