@@ -8,9 +8,13 @@ import type {
   TemplateListResponse
 } from './types'
 
-function resolveApiBaseUrl(): string {
+export function resolveApiBaseUrl(): string {
   const raw = String((import.meta as any).env?.VITE_API_URL || '').trim()
-  const fallback = 'http://localhost:8000'
+  const host =
+    typeof window !== 'undefined' && window.location?.hostname
+      ? window.location.hostname
+      : 'localhost'
+  const fallback = `http://${host}:18000`
 
   if (!raw) {
     return fallback
@@ -26,8 +30,10 @@ function resolveApiBaseUrl(): string {
     return fallback
   }
 }
+export const API_BASE_URL = resolveApiBaseUrl()
+
 const api = axios.create({
-  baseURL: resolveApiBaseUrl(),
+  baseURL: API_BASE_URL,
   timeout: 600000,  // 10 РјРёРЅСѓС‚
   headers: {
     'Content-Type': 'application/json'

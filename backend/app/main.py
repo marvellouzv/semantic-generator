@@ -21,6 +21,7 @@ from .gpt_cleanup import cleanup_all_queries, improve_deterministic_quality
 from .gpt5_head_queries import generate_clusters_gpt5, expand_template_with_gpt5
 from .llm_stage2 import expand_stage2
 from . import templates_storage
+from . import history_storage
 from .cache import cache
 from .metrics import metrics_collector
 
@@ -114,6 +115,13 @@ async def metrics_middleware(request, call_next):
 
 class Health(BaseModel):
     status: str = "ok"
+
+class SaveHistoryRequest(BaseModel):
+    topic: str
+    intents: List[str] = Field(default_factory=list)
+    locale: str = "ru"
+    upperGraph: dict = Field(default_factory=dict)
+    generationTime: int = 0
 
 @app.get("/health", response_model=Health)
 async def health():
@@ -451,6 +459,81 @@ async def export_clusters(req: dict):
 
 
 # ============== TEMPLATES API ==============
+
+@app.post("/api/v1/history")
+def save_history_generation(request: SaveHistoryRequest):
+    """Сохранить генерацию в историю на диске."""
+    try:
+        item = history_storage.save_generation(
+            topic=request.topic,
+            intents=request.intents,
+            locale=request.locale,
+            upper_graph=request.upperGraph,
+            generation_time=request.generationTime,
+        )
+        return item
+    except Exception as e:
+        print(f"Error saving history generation: {e}")
+        raise HTTPException(status_code=500, detail="Failed to save history generation")
+
+@app.get("/api/v1/history")
+def list_history_generations():
+    """Получить всю историю генераций."""
+    try:
+        return {"generations": history_storage.list_generations()}
+    except Exception as e:
+        print(f"Error listing history generations: {e}")
+        raise HTTPException(status_code=500, detail="Failed to list history generations")
+
+@app.get("/api/v1/history/{generation_id}")
+def get_history_generation(generation_id: str):
+    """Получить одну генерацию из истории."""
+    item = history_storage.get_generation(generation_id)
+    if not item:
+        raise HTTPException(status_code=404, detail="History generation not found")
+    return item
+
+@app.post("/api/v1/history/{generation_id}/restore")
+def restore_history_generation(generation_id: str):
+    """Сделать генерацию активной и вернуть ее содержимое."""
+    item = history_storage.restore_generation(generation_id)
+    if not item:
+        raise HTTPException(status_code=404, detail="History generation not found")
+    return {"upperGraph": item.get("upperGraph"), "generation": item}
+
+@app.delete("/api/v1/history/{generation_id}")
+def delete_history_generation(generation_id: str):
+    """Удалить генерацию из истории."""
+    deleted = history_storage.delete_generation(generation_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="History generation not found")
+    return {"message": "History generation deleted"}
+
+@app.post("/api/v1/history/import")
+def import_history_generations(payload: dict):
+    """Импорт истории генераций из JSON."""
+    generations = payload.get("generations")
+    if not isinstance(generations, list):
+        raise HTTPException(status_code=400, detail="Invalid import payload")
+
+    imported = 0
+    for generation in generations:
+        if not isinstance(generation, dict):
+            continue
+        try:
+            metadata = generation.get("metadata") if isinstance(generation.get("metadata"), dict) else {}
+            history_storage.save_generation(
+                topic=str(generation.get("topic", "")).strip() or "Без темы",
+                intents=[str(i) for i in generation.get("intents", []) if isinstance(i, str)],
+                locale=str(generation.get("locale", "ru")) or "ru",
+                upper_graph=generation.get("upperGraph") if isinstance(generation.get("upperGraph"), dict) else {},
+                generation_time=int(metadata.get("generationTime", 0) or 0),
+            )
+            imported += 1
+        except Exception:
+            continue
+
+    return {"imported": imported}
 
 @app.post("/api/v1/templates", response_model=ClusterTemplate)
 def create_template(request: CreateTemplateRequest):

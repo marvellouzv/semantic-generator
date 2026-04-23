@@ -42,3 +42,5 @@ tmp/
 temp/
 backups/
 backend/metrics.db
+data/generations_history.json
+data/generations_history.tmp
